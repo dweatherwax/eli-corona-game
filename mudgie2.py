@@ -14,6 +14,8 @@ pygame.mixer.music.play(-1)
 
 font = pygame.font.SysFont('comicsans', 25)
 
+keys = pygame.key.get_pressed()
+
 
 class player(object):
     walkRight = [pygame.transform.scale(pygame.image.load('images/character4.png'), (40, 60)),
@@ -118,6 +120,68 @@ class Guy(object):
         #win.blit(self.walkRight[1], (self.x, self.y))
 
 
+class Talk(object):
+    def __init__(self, color):
+        self.color = color
+        self.drawOptions = -1
+        self.optionSelected = False
+
+        self.optionA = False
+        self.optionACounter = 0
+
+        self.optionC = False
+        self.optionCCounter = 0
+
+        self.text = font.render('OPTIONS: ', 1, self.color)
+        self.text1 = font.render('A. TALK', 1, self.color)
+        self.text2 = font.render('B. WALK AWAY', 1, self.color)
+        self.text3 = font.render('C. COUGH ON', 1, self.color)
+        self.text4 = font.render('BLAH   BLAH', 1, self.color)
+        self.text5 = font.render('COUGH  COUGH', 1, self.color)
+
+    def setDisplayText(self):
+        if not self.optionSelected:
+            self.drawOptions = 0
+
+    def selectOptionA(self):
+        self.optionA = True
+        self.drawOptions = 1
+        self.optionSelected = True
+
+    def selectOptionB(self):
+        self.drawOptions = 1
+        self.optionSelected = True
+
+    def selectOptionC(self):
+        self.optionC = True
+        self.drawOptions = 1
+        self.optionSelected = True
+
+    def clearOptionSelected(self):
+        self.optionSelected = False
+
+    def draw(self, win, x, y):
+
+        if self.drawOptions == 0:
+            win.blit(self.text, (x, y - 75))
+            win.blit(self.text1, (x + 5, y - 55))
+            win.blit(self.text2, (x + 5, y - 40))
+            win.blit(self.text3, (x + 5, y - 25))
+
+        if self.optionA and self.optionACounter < 50:
+            win.blit(self.text4, (x, y - 20))
+            self.optionACounter += 1
+        elif self.optionACounter == 1000:
+            self.optionA = False
+            self.optionACounter = 0
+
+        if self.optionC and self.optionCCounter < 50:
+            win.blit(self.text5, (x, y - 20))
+            self.optionCCounter += 1
+        elif self.optionCCounter == 1000:
+            self.optionC = False
+            self.optionCCounter = 0
+
 
 def drawText():
     healthtext = font.render('HP: ' + str(character.health), 1, (0, 0, 0))
@@ -142,12 +206,14 @@ def redrawGameWindow():
     win.blit(background, (0,0))
     character.draw(win)
     person.draw(win)
+    talk.draw(win, person.x, person.y)
 
     pygame.display.update()
 
 
 character = player(300, 410, 40, 60)
 person = Guy(10, 410, 40, 60)
+talk = Talk((0, 0, 0))
 happinesscolor = ()
 bodytempcolor = (0, 200, 0)
 run = True
@@ -158,6 +224,17 @@ while run:
     if character.hitbox[1] < person.hitbox[1] + person.hitbox[3] and character.hitbox[1] + character.hitbox[3] > person.hitbox[1]:
             if character.hitbox[0] + character.hitbox[2] > person.hitbox[0] and character.hitbox[0] < person.hitbox[0] + person.hitbox[2]:
                 person.hit()
+                talk.setDisplayText()
+
+                if keys[pygame.K_a]:
+                    talk.selectOptionA()
+                if keys[pygame.K_b]:
+                    character.happiness -= 25
+                    talk.selectOptionB()
+                if keys[pygame.K_c]:
+                    talk.selectOptionC()
+            else:
+                talk.clearOptionSelected()
 
     if person.x > character.x:
         person.right = True
@@ -186,8 +263,6 @@ while run:
             run = False
 
     keys = pygame.key.get_pressed()
-
-    print(keys[pygame.K_LEFT])
 
     if keys[pygame.K_LEFT] and character.x > character.vel:
         character.x -= character.vel
