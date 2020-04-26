@@ -1,4 +1,5 @@
 import pygame
+import random
 pygame.init()
 
 win = pygame.display.set_mode((850, 480))
@@ -18,13 +19,13 @@ keys = pygame.key.get_pressed()
 
 
 class player(object):
-    walkRight = [pygame.transform.scale(pygame.image.load('images/character4.png'), (40, 60)),
-                 pygame.transform.scale(pygame.image.load('images/character5.png'), (40, 60)),
-                 pygame.transform.scale(pygame.image.load('images/character6.png'), (40, 60))]
+    walkRight = [pygame.transform.scale(pygame.image.load('images/character4t.png'), (40, 60)),
+                 pygame.transform.scale(pygame.image.load('images/character5t.png'), (40, 60)),
+                 pygame.transform.scale(pygame.image.load('images/character6t.png'), (40, 60))]
 
-    walkLeft = [pygame.transform.scale(pygame.image.load('images/character10.png'), (40, 60)),
-                pygame.transform.scale(pygame.image.load('images/character11.png'), (40, 60)),
-                pygame.transform.scale(pygame.image.load('images/character12.png'), (40, 60))]
+    walkLeft = [pygame.transform.scale(pygame.image.load('images/character10t.png'), (40, 60)),
+                pygame.transform.scale(pygame.image.load('images/character11t.png'), (40, 60)),
+                pygame.transform.scale(pygame.image.load('images/character12t.png'), (40, 60))]
 
     def __init__(self, x, y, width, height):
         self.x = x
@@ -42,13 +43,14 @@ class player(object):
         self.bodytemp = 98.6
         self.symptoms = 0
         self.happiness = 50
+        self.sicknessChance = 0
         self.standing = True
         self.hitbox = (self.x + 17, self.y + 11, 29, 52)
 
     def draw(self, win):
         if self.walkCount + 1 >= 9:
             self.walkCount = 0
-        if not (self.standing):
+        if not self.standing and self.vel > 0:
             if self.left:
                 win.blit(self.walkLeft[self.walkCount // 3], (self.x, self.y))
                 self.walkCount += 1
@@ -65,9 +67,9 @@ class player(object):
 
 
 class Guy(object):
-    walkRight = [pygame.transform.scale(pygame.image.load('images/person4.png'), (40, 60)),
-                 pygame.transform.scale(pygame.image.load('images/person5.png'), (40, 60)),
-                 pygame.transform.scale(pygame.image.load('images/person6.png'), (40, 60))]
+    walkRight = [pygame.transform.scale(pygame.image.load('images/person4t.png'), (40, 60)),
+                 pygame.transform.scale(pygame.image.load('images/person5t.png'), (40, 60)),
+                 pygame.transform.scale(pygame.image.load('images/person6t.png'), (40, 60))]
 
     walkLeft = [pygame.transform.scale(pygame.image.load('images/person10.png'), (40, 60)),
                 pygame.transform.scale(pygame.image.load('images/person11.png'), (40, 60)),
@@ -115,16 +117,23 @@ class Guy(object):
         self.x += self.vel
 
     def hit(self):
-        self.drawable = False
-        self.vel = 0
-        #win.blit(self.walkRight[1], (self.x, self.y))
+        if talk.drawStop == 1:
+            if talk.optionACounter >= 50 or talk.optionCCounter >= 50 or talk.optionCACounter >= 50 or talk.optionB == True:
+                self.drawable = True
+                self.vel = 3
+        else:
+            self.drawable = False
+            self.vel = 0
 
 
 class Talk(object):
     def __init__(self, color):
         self.color = color
         self.drawOptions = -1
+        self.drawStop = 0
         self.optionSelected = False
+
+        self.optionB = False
 
         self.optionA = False
         self.optionACounter = 0
@@ -132,29 +141,43 @@ class Talk(object):
         self.optionC = False
         self.optionCCounter = 0
 
+        self.optionCA = False
+        self.optionCACounter = 0
+
         self.text = font.render('OPTIONS: ', 1, self.color)
         self.text1 = font.render('A. TALK', 1, self.color)
         self.text2 = font.render('B. WALK AWAY', 1, self.color)
         self.text3 = font.render('C. COUGH ON', 1, self.color)
         self.text4 = font.render('BLAH   BLAH', 1, self.color)
         self.text5 = font.render('COUGH  COUGH', 1, self.color)
+        self.text6 = font.render("YOU AREN'T SICK CAN'T COUGH", 1, self.color)
 
     def setDisplayText(self):
-        if not self.optionSelected:
+        if not self.optionSelected and self.drawStop == 0:
             self.drawOptions = 0
 
     def selectOptionA(self):
         self.optionA = True
         self.drawOptions = 1
+        self.drawStop = 1
         self.optionSelected = True
 
     def selectOptionB(self):
+        self.optionB = True
         self.drawOptions = 1
+        self.drawStop = 1
         self.optionSelected = True
 
     def selectOptionC(self):
         self.optionC = True
         self.drawOptions = 1
+        self.drawStop = 1
+        self.optionSelected = True
+
+    def selectOptionCA(self):
+        self.optionCA = True
+        self.drawOptions = 1
+        self.drawStop = 1
         self.optionSelected = True
 
     def clearOptionSelected(self):
@@ -181,6 +204,14 @@ class Talk(object):
         elif self.optionCCounter == 1000:
             self.optionC = False
             self.optionCCounter = 0
+
+        if self.optionCA and self.optionCACounter < 50:
+            win.blit(self.text6, (x, y - 20))
+            self.optionCACounter += 1
+        elif self.optionCACounter == 1000:
+            self.optionCA = False
+            self.optionCACounter = 0
+
 
 
 def drawText():
@@ -222,19 +253,35 @@ while run:
 
 
     if character.hitbox[1] < person.hitbox[1] + person.hitbox[3] and character.hitbox[1] + character.hitbox[3] > person.hitbox[1]:
-            if character.hitbox[0] + character.hitbox[2] > person.hitbox[0] and character.hitbox[0] < person.hitbox[0] + person.hitbox[2]:
-                person.hit()
-                talk.setDisplayText()
+        if character.hitbox[0] + character.hitbox[2] > person.hitbox[0] and character.hitbox[0] < person.hitbox[0] + person.hitbox[2]:
+            character.vel = 0
+            person.hit()
+            talk.setDisplayText()
 
-                if keys[pygame.K_a]:
-                    talk.selectOptionA()
-                if keys[pygame.K_b]:
-                    character.happiness -= 25
-                    talk.selectOptionB()
-                if keys[pygame.K_c]:
+            if keys[pygame.K_a]:
+                character.happiness += 25
+                talk.selectOptionA()
+            if keys[pygame.K_b]:
+                character.happiness -= 25
+                talk.selectOptionB()
+            if keys[pygame.K_c]:
+                if character.symptoms > 0:
                     talk.selectOptionC()
-            else:
-                talk.clearOptionSelected()
+                else:
+                    talk.selectOptionCA()
+
+            if talk.drawStop == 1:
+                character.vel = 5
+        else:
+            talk.clearOptionSelected()
+            character.vel = 5
+
+
+    if talk.optionA == True:
+        character.sicknessChance = random.randrange(80)
+    if character.sicknessChance == 57:
+        character.symptoms = 1
+
 
     if person.x > character.x:
         person.right = True
@@ -248,6 +295,11 @@ while run:
         happinesscolor = (255, 0, 0)
     if character.happiness >= 76:
         happinesscolor = (0, 200, 0)
+
+    if character.happiness >= 100:
+        character.happiness = 100
+    if character.happiness <= 0:
+        character.happiness = 0
 
     if character.bodytemp >= 98.6 and character.bodytemp <= 100:
         bodytempcolor = (0, 200, 0)
