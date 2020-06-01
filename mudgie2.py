@@ -2,11 +2,12 @@ import pygame
 import random
 pygame.init()
 
-win = pygame.display.set_mode((850, 480))
+win = pygame.display.set_mode((1500, 480))
 
 pygame.display.set_caption('Covid 19')
 
-background = pygame.image.load('images/bg.jpg')
+background = pygame.transform.scale(pygame.image.load('images/bg.jpg'), (1500, 500))
+background2 = pygame.transform.scale(pygame.image.load('images/simpsons-background.png'), (4902, 480))
 
 clock = pygame.time.Clock()
 
@@ -27,6 +28,14 @@ class player(object):
                 pygame.transform.scale(pygame.image.load('images/character11t.png'), (40, 60)),
                 pygame.transform.scale(pygame.image.load('images/character12t.png'), (40, 60))]
 
+    walkUp = [pygame.transform.scale(pygame.image.load('images/character1t.png'), (40, 60)),
+              pygame.transform.scale(pygame.image.load('images/character2t.png'), (40, 60)),
+              pygame.transform.scale(pygame.image.load('images/character3t.png'), (40, 60))]
+
+    walkDown = [pygame.transform.scale(pygame.image.load('images/character7.png'), (40, 60)),
+                pygame.transform.scale(pygame.image.load('images/character8.png'), (40, 60)),
+                pygame.transform.scale(pygame.image.load('images/character9.png'), (40, 60))]
+
     def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
@@ -34,8 +43,10 @@ class player(object):
         self.height = height
         self.vel = 5
         self.isJump = False
-        self.left = False
+        self.left = True
         self.right = False
+        self.up = False
+        self.down = False
         self.walkCount = 0
         self.jumpCount = 10
         self.health = 100
@@ -43,6 +54,7 @@ class player(object):
         self.bodytemp = 98.6
         self.symptoms = 0
         self.happiness = 50
+        self.money = 50
         self.sicknessChance = 0
         self.standing = True
         self.hitbox = (self.x + 17, self.y + 11, 29, 52)
@@ -50,6 +62,19 @@ class player(object):
     def draw(self, win):
         if self.walkCount + 1 >= 9:
             self.walkCount = 0
+
+        print(self.walkCount)
+        if self.standing and self.vel >= 0:
+                if self.up:
+                    win.blit(self.walkUp[self.walkCount // 3], (self.x, self.y))
+                    self.walkCount += 1
+                elif self.down:
+                    win.blit(self.walkDown[self.walkCount // 3], (self.x, self.y))
+                    self.walkCount += 1
+                elif self.right:
+                    win.blit(self.walkRight[1], (self.x, self.y))
+                else:
+                    win.blit(self.walkLeft[1], (self.x, self.y))
         if not self.standing and self.vel > 0:
             if self.left:
                 win.blit(self.walkLeft[self.walkCount // 3], (self.x, self.y))
@@ -57,11 +82,7 @@ class player(object):
             elif self.right:
                 win.blit(self.walkRight[self.walkCount // 3], (self.x, self.y))
                 self.walkCount += 1
-        else:
-            if self.right:
-                win.blit(self.walkRight[1], (self.x, self.y))
-            else:
-                win.blit(self.walkLeft[1], (self.x, self.y))
+
         self.hitbox = (self.x + 17, self.y + 11, 29, 52)
         # pygame.draw.rect(win, (225, 0, 0), self.hitbox, 2)
 
@@ -222,6 +243,14 @@ def drawText():
     symptomstext = font.render('SYMPTOMS: ' + str(character.symptoms) + '/4', 1, (0, 0, 0))
     happinesstext1 = font.render('HAPPINESS: ', 1, (0, 0, 0))
     happinesstext2 = font.render(str(character.happiness) + '/100', 1, happinesscolor)
+    moneytext = font.render('DOLLARS: ' + '$' + str(character.money), 1, (0, 0, 0))
+    hospitaltext = font.render('HOSPITAL', 1, (0, 0, 0))
+    housetext = font.render('HOUSE', 1, (0, 0, 0))
+    officetext = font.render('OFFICE', 1, (0, 0, 0))
+    win.blit(officetext, (200, 200))
+    win.blit(housetext, (800, 200))
+    win.blit(hospitaltext, (1350, 200))
+    win.blit(moneytext, (10, 120))
     win.blit(happinesstext1, (10, 98))
     win.blit(happinesstext2, (120, 98))
     win.blit(bodytemptext1, (10, 76))
@@ -235,6 +264,7 @@ def drawText():
 
 def redrawGameWindow():
     win.blit(background, (0,0))
+    win.blit(background2, (-2800, 0))
     character.draw(win)
     person.draw(win)
     talk.draw(win, person.x, person.y)
@@ -244,10 +274,11 @@ def redrawGameWindow():
 
 character = player(300, 410, 40, 60)
 person = Guy(10, 410, 40, 60)
-talk = Talk((0, 0, 0))
+talk = Talk((255, 255, 255))
 happinesscolor = ()
 bodytempcolor = (0, 200, 0)
 run = True
+
 while run:
     clock.tick(27)
 
@@ -277,8 +308,13 @@ while run:
             character.vel = 5
 
 
+    if character.x > 200 and character.x < 220 and character.y == 350:
+        character.vel = 0
+    else:
+        character.vel = 5
+
     if talk.optionA == True:
-        character.sicknessChance = random.randrange(80)
+        character.sicknessChance = random.randrange(300)
     if character.sicknessChance == 57:
         character.symptoms = 1
 
@@ -316,22 +352,32 @@ while run:
 
     keys = pygame.key.get_pressed()
 
+    if keys[pygame.K_UP] and character.x > 200 and character.x < 220 and character.y > 350:
+        character.y -= character.vel
+        character.left = False
+        character.right = False
+        character.down = False
+        character.up = True
+        character.standing = False
+
     if keys[pygame.K_LEFT] and character.x > character.vel:
         character.x -= character.vel
         character.left = True
         character.right = False
         character.standing = False
-    elif keys[pygame.K_RIGHT] and character.x < 850 - character.width - character.vel:
+    elif keys[pygame.K_RIGHT] and character.x < 1500 - character.width - character.vel:
         character.x += character.vel
         character.right = True
         character.left = False
         character.standing = False
+    elif keys[pygame.K_UP] or keys[pygame.K_DOWN]:
+        character.standing = True
     else:
         character.standing = True
         character.walkCount = 0
 
     if not (character.isJump):
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_SPACE]:
             character.isJump = True
             character.right = False
             character.left = False

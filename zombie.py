@@ -17,13 +17,13 @@ font = pygame.font.SysFont('comicsans', 50)
 
 
 class player(object):
-    walkRight = [pygame.transform.scale(pygame.image.load('images/character4.png'), (40, 60)),
-                 pygame.transform.scale(pygame.image.load('images/character5.png'), (40, 60)),
-                 pygame.transform.scale(pygame.image.load('images/character6.png'), (40, 60))]
+    walkRight = [pygame.transform.scale(pygame.image.load('images/character4t.png'), (40, 60)),
+                 pygame.transform.scale(pygame.image.load('images/character5t.png'), (40, 60)),
+                 pygame.transform.scale(pygame.image.load('images/character6t.png'), (40, 60))]
 
-    walkLeft = [pygame.transform.scale(pygame.image.load('images/character10.png'), (40, 60)),
-                pygame.transform.scale(pygame.image.load('images/character11.png'), (40, 60)),
-                pygame.transform.scale(pygame.image.load('images/character12.png'), (40, 60))]
+    walkLeft = [pygame.transform.scale(pygame.image.load('images/character10t.png'), (40, 60)),
+                pygame.transform.scale(pygame.image.load('images/character11t.png'), (40, 60)),
+                pygame.transform.scale(pygame.image.load('images/character12t.png'), (40, 60))]
 
     death = [pygame.transform.scale(pygame.image.load('images/character-death1.png'), (40, 60)),
                 pygame.transform.scale(pygame.image.load('images/character-death2.png'), (40, 60)),
